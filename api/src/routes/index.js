@@ -7,8 +7,8 @@ const rutasTipo = require("./rutasTipo");
 
 const router = Router();
 
-router.use("/pokemon", rutasPokemon);
-router.use("/tipo", rutasTipo);
+router.use("/pokemons", rutasPokemon);
+router.use("/types", rutasTipo);
 // Configurar los routers
 // Ejemplo: router.use('/auth', authRouter);
 

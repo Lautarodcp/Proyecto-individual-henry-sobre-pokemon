@@ -1,43 +1,40 @@
-const { Router } = require("express");
-const { getPokemonAll, getPokemonId, getPokemonName, postCreatePokemon, getTipos} = require("../controllers/controllers");
+const { Router } = require('express');
+const controlers = require('../controllers/Controllers');
 const router = Router();
-const { Pokemon, Tipo } = require("../db")
 
-router.get("/", async (req, res) =>{
-    const { nombre } = req.query;
-    try {
-        const todosPokemon = await getPokemonAll();
-        if (nombre) {
-                const buscarPokemon = await getPokemonName(nombre);
-                return res.json(buscarPokemon);
-        }
-        res.json(todosPokemon);
-    } catch (error) {
-        res.status(400).json(error.message);
-    };
+router.get('/', async (req, res) => {
+	const { name } = req.query;
+	try {
+		const pokeInfo = await controlers.getAllPokemons();
+		if (name) {
+			const findPokemon = await controlers.getPokemonsName(name, pokeInfo);
+			return res.json(findPokemon);
+		}
+		res.json(pokeInfo);
+	} catch (error) {
+		res.status(400).json(error.message);
+	}
 });
 
-router.get("/:id", async (req, res) =>{
-    const pokemon = await getPokemonAll();
-    const { id } = req.params;
-    try {
-        if (id) {
-            const buscarId = await getPokemonId(id);
-            res.status(201).send (buscarId);
-        };  
-    } catch (error) {
-        res.status(400).send(error.message);
-    };
+router.get('/:id', async (req, res) => {
+	const { id } = req.params;
+	try {
+		const pokeInfo = await controlers.getPokemonsId(id);
+		res.json(pokeInfo);
+	} catch (error) {
+		console.log(error);
+		res.status(400).send(error.message);
+	}
 });
 
-router.post("/", async (req, res) => {
-    const info = req.body;
-    try {
-        const pokemonNuevo = await postCreatePokemon(info);
-        res.status(201).send(pokemonNuevo);
-    } catch (error) {
-        res.status(400).send(error.message);
-    }
+router.post('/', async (req, res) => {
+	const info = req.body;
+	try {
+		const pokeInfo = await controlers.pokeCreate(info);
+		res.status(201).send(pokeInfo);
+	} catch (error) {
+		res.status(400).send(error.message);
+	}
 });
 
 module.exports = router;

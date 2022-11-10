@@ -1,11 +1,9 @@
-const { Pokemon, Tipo } = require ("../db.js");
-const axios = require ("axios");
+const axios = require('axios');
+const { Pokemon, Type } = require('../db');
 
-const urlPokemon = "https://pokeapi.co/api/v2/pokemon?limit=151&offset=0";
+const urlPokemon = 'https://pokeapi.co/api/v2/pokemon?limit=151&offset=0';
 
-//pokemon
-//get buscar todos en API
-const getPokemonApi = async () => {
+const getPokemonsApi = async () => {
 	try {
 		const pokemonApiUrl = await axios.get(urlPokemon);
 		const arrayPromise = await pokemonApiUrl?.data.results.map((element) => {
@@ -36,70 +34,146 @@ const getPokemonApi = async () => {
 	}
 };
 
-//buscar todos en base de datos
-const getPokemonBD = async ()=>{
-const pokemonBD = await Pokemon.findAll();
-    return pokemonBD;
-}
-// juntar todos los pokemon
-const getPokemonAll = async ()=>{
-    const pokemonBD = await getPokemonBD();
-    const pokemonApi = await getPokemonApi();
-    const allPokemon = [...pokemonApi, ...pokemonBD];
-    return allPokemon;
-}
-//get buscar por id
-const getPokemonId = async (id)=>{
-    const todosLosPokemon = await getPokemonAll();
-    const buscar = todosLosPokemon.find((pokemon) => pokemon.id.toString() === id);
-    if (!buscar) throw new Error (`El pokemon con id ${id} no se encontro`);
+const getPokemonDb = async () => {
+	const pokeInfoDb = await Pokemon.findAll({
+		include: {
+			model: Type,
+			attributes: ['name'],
+			through: {
+				attributes: [],
+			},
+		},
+	});
+	return pokeInfoDb;
+};
 
-    return buscar;
+const getAllPokemons = async () => {
+	const apiInfo = await getPokemonsApi();
+	const dbInfo = await getPokemonDb();
+	const allInfo = [...apiInfo, ...dbInfo];
+	return allInfo;
 };
-//get buscar por nombre
-const getPokemonName = async (nombre)=>{
-    const todosoLosPokemon = await getPokemonAll();
-    const encontrado = todosoLosPokemon.find((pokemon) => { return (
-        pokemon.name.toLowerCase() === nombre.toLowerCase()
-        );
-    });
-    console.log(encontrado);
-    if (!encontrado) throw new Error (`No se encontro pokemon con el nombre ${nombre}`);
-    return encontrado;
+
+const getPokemonsName = async (name, info) => {
+	let pokemonFind;
+	if (name.length === 1) {
+		pokemonFind = info?.filter(
+			(pokemon) => pokemon.name.toLowerCase()[0] === name.toLowerCase()
+		);
+	} else {
+		pokemonFind = info?.filter((pokemon) =>
+			pokemon.name.includes(name.toLowerCase())
+		);
+	}
+
+	if (!pokemonFind.length) {
+		throw new Error(`No se encontró un pokemon con el nombre ${name}`);
+	}
+	return pokemonFind;
 };
-//post crear pokemon
-const postCreatePokemon = async (body)=>{
-    const { nombre, vida, ataque, defensa, velocidad, altura, peso, imagen, tipo } = body;
-    
-    if (!nombre, !tipo) throw new Error ("Faltan datos");
-   
-    const allPokemon = await getPokemonAll();
-    const buscarCoincidencia = allPokemon.find((pokemon) => pokemon.nombre.toLowerCase()=== nombre.toLOwerCase());
-    
-    if (buscarCoincidencia) throw new Error (`No se puede crear el pokemon ${nombre}, ya existe un pokemon con ese nombre`);
-    let tipoPokemon = await Tipo.create({tipoPokemon: tipo.toLowerCase()});
-    let pokemonNuevo = await Pokemon.create({
-        nombre: nombre.toLowerCase(),
-        vida: parseInt(vida),
-        ataque: parseInt(ataque),
-        defensa: parseInt(defensa),
-        velocidad: parseInt(velocidad),
-        altura: parseInt(altura),
-        peso: parseInt(peso),
-        imagen: imagen?imagen: "https://www.viniloscasa.com/38276-thickbox/vinilo-pikachu-pokemon.jpg",
-    });
-    return pokemonNuevo;
+
+const getPokemonsId = async (id) => {
+	const pokeInfo = await getAllPokemons();
+	const findPokemon = pokeInfo?.find((pokemon) => pokemon.id.toString() === id);
+	if (!findPokemon)
+		throw new Error(`El pokemon con id ${id} no fue encontrado`);
+
+	return findPokemon;
 };
-//get buscar tipos de pokemon
-const getTipos = ()=>{
+
+const typesInDb = async () => {
+	try {
+		const apiTypes = await axios.get('https://pokeapi.co/api/v2/type');
+		const pokeInfo = await apiTypes.data.results.map((type) => {
+			return {
+				name: type.name,
+			};
+		});
+
+		pokeInfo.forEach((pokemonType) => {
+			Type.findOrCreate({
+				where: pokemonType,
+			});
+		});
+	} catch (error) {
+		console.log(error, 'typesInDb');
+	}
+};
+
+const getTypes = async () => {
+	const dbTypes = await Type.findAll();
+	if (!dbTypes.length) throw new Error(`No se encontraros tipos`);
+	return dbTypes;
+};
+
+const pokeCheckName = async (name) => {
+	const allPokemons = await getAllPokemons();
+	const pokemonFind = allPokemons?.find(
+		(pokemon) => pokemon.name.toLowerCase() === name.toLowerCase()
+	);
+	if (pokemonFind)
+		throw new Error(
+			`No se pueden crear el pokemon ${name} debido a que ya existe un pokemon con ese nombre`
+		);
+};
+
+let pokedex = 1155;
+
+const pokeCreate = async (body) => {
+	const { name, hp, attack, defense, speed, height, weight, img, type } = body;
+	if ((!name, !hp, !type.length)) throw new Error('Faltan datos');
+
+	await pokeCheckName(name);
+
+	let newPokemon = await Pokemon.create({
+		name: name.toLowerCase(),
+		pokedex: pokedex++,
+		hp: parseInt(hp) || null,
+		attack: parseInt(attack) || null,
+		defense: parseInt(defense) || null,
+		speed: parseInt(speed) || null,
+		height: parseInt(height) || null,
+		weight: parseInt(weight) || null,
+		img: img
+			? img
+			: 'https://assets.pokemon.com/static2/_ui/img/og-default-image.jpeg',
+	});
+
+	const pokeType = await Type.findAll({
+		where: {
+			name: type,
+		},
+	});
+
+	let typesDb;
+	if (type.length === 2) {
+		if (pokeType[0].dataValues.name !== type[0]) {
+			typesDb = [pokeType[0], pokeType[1]] = [pokeType[1], pokeType[0]];
+		} else {
+			typesDb = pokeType;
+		}
+	} else {
+		typesDb = pokeType;
+	}
+
+	await newPokemon.addType(typesDb);
+
+	return await Pokemon.findByPk(newPokemon.id, {
+		include: {
+			model: Type,
+			attributes: ['name'],
+			through: {
+				attributes: [],
+			},
+		},
+	});
 };
 
 module.exports = {
-    getPokemonApi,
-    getPokemonId,
-    getPokemonName,
-    postCreatePokemon,
-    getTipos,
-    getPokemonBD,
-    getPokemonAll
+	getAllPokemons,
+	getPokemonsId,
+	getPokemonsName,
+	typesInDb,
+	getTypes,
+	pokeCreate,
 };

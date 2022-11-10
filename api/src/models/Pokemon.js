@@ -12,33 +12,37 @@ module.exports = (sequelize) => {
 				allowNull: false,
 				primaryKey: true,
 			},
-			nombre: {
+			name: {
 				type: DataTypes.STRING,
 				allowNull: false,
 				unique: true,
 			},
-			vida: {
+			pokedex: {
 				type: DataTypes.INTEGER,
 			},
-			ataque: {
+			hp: {
 				type: DataTypes.INTEGER,
 			},
-			defensa: {
+			attack: {
 				type: DataTypes.INTEGER,
 			},
-			velocidad: {
+			defense: {
 				type: DataTypes.INTEGER,
 			},
-			altura: {
+			speed: {
 				type: DataTypes.INTEGER,
 			},
-			peso: {
+			height: {
 				type: DataTypes.INTEGER,
 			},
-			imagen: {
+			weight: {
+				type: DataTypes.INTEGER,
+			},
+			img: {
 				type: DataTypes.TEXT,
 			},
-			cradoEnBD: {
+			crateInDb: {
+				// Adicional
 				type: DataTypes.BOOLEAN,
 				defaultValue: true,
 				allowNull: false,
