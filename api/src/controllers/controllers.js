@@ -89,7 +89,6 @@ const typesInDb = async () => {
 				name: type.name,
 			};
 		});
-
 		pokeInfo.forEach((pokemonType) => {
 			Type.findOrCreate({
 				where: pokemonType,
@@ -99,7 +98,6 @@ const typesInDb = async () => {
 		console.log(error, 'typesInDb');
 	}
 };
-
 const getTypes = async () => {
 	const dbTypes = await Type.findAll();
 	if (!dbTypes.length) throw new Error(`No se encontraros tipos`);
