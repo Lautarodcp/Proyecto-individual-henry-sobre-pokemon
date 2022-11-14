@@ -1,0 +1,27 @@
+.landingPage{
+	background-image: url('http://1.bp.blogspot.com/-3er9OWVQvbQ/Ucs3yKONPOI/AAAAAAAACWA/45s8LAg-6B4/s1600/Pokemon-anime-portada-1.jpg');
+	background-size: cover;
+	background-repeat: no-repeat;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: flex-end;
+}
+
+.button{
+    margin-bottom: 20px;
+}
+
+.boton{
+    background-color: red;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 500;
+}
+.boton:hover{
+    background: rgb(204, 119, 119);
+}
+
